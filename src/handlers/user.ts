@@ -1,33 +1,31 @@
-import prisma from '../db'
-import { comparePasswords, createJWT, hashPassword } from '../modules/auth'
+import { Handler } from 'express';
+import prisma from '../db';
+import { comparePasswords, createJWT, hashPassword } from '../modules/auth';
 
-export const createNewUser = async (req, res) => {
+export const createNewUser: Handler = async (req, res) => {
   const user = await prisma.user.create({
     data: {
       username: req.body.username,
-      password: await hashPassword(req.body.password)
-    }
-  })
+      password: await hashPassword(req.body.password),
+    },
+  });
+  const token = createJWT(user);
 
-  const token = createJWT(user)
-  res.json({ token })
-}
+  res.json({ token: token });
+};
 
-export const signin = async (req, res) => {
+export const signIn: Handler = async (req, res) => {
   const user = await prisma.user.findUnique({
-    where: {
-      username: req.body.username
-    }
-  })
+    where: { username: req.body.username },
+  });
 
-  const isValid = await comparePasswords(req.body.password, user.password)
+  const isValid = await comparePasswords(req.body.password, user.password);
 
   if (!isValid) {
-    res.status(401)
-    res.json({message: 'nope'})
-    return
+    res.status(401);
+    res.send('WRONG'); //CHECK
   }
 
-  const token = createJWT(user)
-  res.json({ token })
-}
+  const token = createJWT(user);
+  res.json({ token });
+};
